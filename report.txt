@@ -1,0 +1,5 @@
+Start Time: 2024-08-13 19:19:23.682147
+End Time: 2024-08-13 19:24:09.270585
+Total Users: 2499
+Successfully Invited: 82
+Failed to Invite: 18
