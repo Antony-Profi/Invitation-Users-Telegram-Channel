@@ -9,7 +9,7 @@ class Config:
         self.API_ID = int(os.environ.get("API_ID"))
         self.API_HASH = os.environ.get("API_HASH")
         self.PHONE_NUMBER = os.environ.get("PHONE_NUMBER")
-        self.CHANNEL_USERNAME = "anycars_ukraine"
+        self.CHANNEL_USERNAME = ""
         self.USERS_FILE = "InviteUsersTGChannel.txt"
         self.PROGRESS_FILE = "progress.txt"
         self.REPORT_FILE = "report.txt"
