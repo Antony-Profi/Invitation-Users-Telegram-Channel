@@ -1,10 +1,13 @@
+import asyncio
 import os
-import time
 
 from datetime import datetime
+
+from telethon.errors import FloodWaitError, UserPrivacyRestrictedError, UserNotMutualContactError
 from telethon.sync import TelegramClient
 from telethon.tl.functions.channels import InviteToChannelRequest, GetParticipantRequest
 from telethon.tl.types import ChannelParticipantsAdmins
+from utils import updateProgress
 from session_manager import getSessionPath, moveSessionFiles
 from logger import logger
 
@@ -47,7 +50,7 @@ class TelegramInviter:
 
     async def invitesUsersToChannel(self, channel, users, start_index, batch_size=100):
         if not await self.checkAdminRights(channel):
-            logger.info("У вас нет прав администратора для добавления пользователей в этот канал.")
+            logger.warning("У вас нет прав администратора для добавления пользователей в этот канал.")
             return 0, 0
 
         end_index = min(start_index + batch_size, len(users))
@@ -57,13 +60,17 @@ class TelegramInviter:
         for i in range(start_index, end_index):
             user = users[i]
             try:
-                print(f"Inviting {user} to {channel.username} (User {i + 1}/{len(users)})")
+                logger.info(f"Inviting {user} to {channel.username} (User {i + 1}/{len(users)})")
                 await self.client(InviteToChannelRequest(channel, [user]))
                 invited_count += 1
-                time.sleep(40)
-            except Exception as e:
-                print(f"Error inviting {user}: {e}")
-                failed_count += 1
-                time.sleep(15)
+                # updateProgress(self.config.PROGRESS_FILE, i + 1)
+                # logger.info(f"Successfully invited {user}")
+                await asyncio.sleep(40)
 
+            except Exception as e:
+                logger.error(f"Error inviting {user}: {e}")
+                failed_count += 1
+                await asyncio.sleep(15)
+
+        logger.info(f"Batch completed. Invited: {invited_count}, Failed: {failed_count}")
         return invited_count, failed_count

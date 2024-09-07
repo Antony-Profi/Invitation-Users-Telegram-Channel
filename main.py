@@ -2,7 +2,7 @@ import asyncio
 import time
 
 from config import loadConfig
-from utils import readsUsers, getLeastProcessedIndex, updateProgress, logReport
+from utils import readsUsers, getLeastProcessedIndex, updateProgress, logReport, displayReportStatistics
 from telegram_channel import TelegramInviter
 from session_manager import moveSessionFiles
 from code_analyzer import CodeAnalyzer
@@ -12,37 +12,34 @@ from logger import logger
 async def main():
     analyzer = CodeAnalyzer()
     logger.info("Starting the program")
-    time.sleep(5)
+    await asyncio.sleep(5)
 
     config = loadConfig()
     logger.info("Configuration loaded")
-    time.sleep(5)
+    await asyncio.sleep(5)
 
     users = readsUsers(config.USERS_FILE)
-    logger.info(f"Loaded {len(users)} users from file")
+    logger.info(f"Loaded {len(users)} users from file {'InviteUsersTGChannel.txt'}")
 
     start_index = getLeastProcessedIndex(config.PROGRESS_FILE)
     logger.info(f"Starting from index {start_index}")
 
     inviter = TelegramInviter(config)
     await inviter.start()
-    logger.info("Telegram client started")
-    time.sleep(5)
 
     channel = await inviter.getChannel()
     logger.info(f"Connected to channel: {channel.title}")
-    time.sleep(5)
+    await asyncio.sleep(5)
 
     try:
         invited_count, failed_count = await inviter.invitesUsersToChannel(channel, users, start_index)
         logger.info(f"Invitation process completed. Invited: {invited_count}, Failed: {failed_count}")
-    except Exception as e:
-        logger.info(f"An error occurred during invitation process: {str(e)}")
+    except Exception as err:
+        logger.error(f"An error occurred during invitation process: {str(err)}")
         raise
 
-    updateProgress(config.PROGRESS_FILE, len(users))
     logReport(config.REPORT_FILE, inviter.start_time, invited_count, failed_count, len(users))
-    logger.info("Session files moved")
+    displayReportStatistics(config.REPORT_FILE)
 
     moveSessionFiles()
     logger.info("Session files moved")
@@ -54,9 +51,11 @@ async def main():
 
 
 if __name__ == "__main__":
+    config = loadConfig()
     try:
         asyncio.run(main())
-    except Exception as e:
-        logger.critical(f"Critical error occurred: {str(e)}")
+    except Exception as error:
+        logger.critical(f"Critical error occurred: {str(error)}")
     finally:
         logger.info("Program execution ended")
+        displayReportStatistics(config.REPORT_FILE)
